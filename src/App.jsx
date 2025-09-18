@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import NotFound from "./components/notFound/NotFound";
 
 function App() {
   const [items, setItems] = useState([]);
@@ -22,6 +23,8 @@ function App() {
         <Header>Code Café</Header>
         <Routes>
           <Route path="/" element={<Home items={items} />} />
+		  
+		  <Route path="*" element={<NotFound/>}></Route>
         </Routes>
       </Router>
     </>
