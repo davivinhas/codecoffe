@@ -23,19 +23,22 @@ function App() {
     <>
       <Router>
         <Header>Code Café</Header>
-        <Routes>
+
+        {items.length === 0 ? <div>Loading...</div>: (
+          <Routes>
           
           <Route path="/" element={<Home items={items} />} />
 
           <Route path="*" element={<NotFound />}></Route>
 
           <Route path="/details" element={<Details items={items} />}>
-            <Route path=":id" element={<DetailItem />} />
+            <Route path=":id" element={<DetailItem items={items}/>} />
             <Route index element={<div>No item selected</div>} />
 
           </Route>
 
         </Routes>
+        )}
       </Router>
     </>
   );
