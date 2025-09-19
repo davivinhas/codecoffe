@@ -1,16 +1,19 @@
 import "./App.css";
 import Header from "./components/header/Header";
 import Home from "./components/home/Home";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import axios from "axios";
 import Details from "./components/details/Details";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import NotFound from "./components/notFound/NotFound";
 import DetailItem from "./components/detailsItem/DetailItem";
+import { cartReducer, initialCartState } from "./reducers/cartReducer";
 
 function App() {
   const [items, setItems] = useState([]);
+
+  const [cart, dispatch] = useReducer(cartReducer, initialCartState)
 
   useEffect(() => {
     axios
@@ -22,7 +25,7 @@ function App() {
   return (
     <>
       <Router>
-        <Header>Code Café</Header>
+        <Header cart={cart}>Code Café</Header>
 
         {items.length === 0 ? <div>Loading...</div>: (
           <Routes>
@@ -32,7 +35,7 @@ function App() {
           <Route path="*" element={<NotFound />}></Route>
 
           <Route path="/details" element={<Details items={items} />}>
-            <Route path=":id" element={<DetailItem items={items}/>} />
+            <Route path=":id" element={<DetailItem items={items} dispatch={dispatch}/>} />
             <Route index element={<div>No item selected</div>} />
 
           </Route>
