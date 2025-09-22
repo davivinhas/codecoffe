@@ -15,7 +15,7 @@ function Header({ children, cart }) {
           <h1>Code Café</h1>
         </Link>
         <div className="menu">
-          <Link to="#todo">
+          <Link to="/cart">
             <img src={CartIcon} alt="Cart" />
             <div className="badge">{cartQuantity}</div>
           </Link>
