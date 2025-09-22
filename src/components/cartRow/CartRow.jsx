@@ -10,11 +10,18 @@ function CartRow({ cartItem, items, dispatch }) {
       itemId: item.itemId,
     });
 
-    const addAnotherInCart = () =>
-        dispatch({
-            type: CartTypes.ADD,
-            itemId: item.itemId,
-        })
+  const addAnotherInCart = () =>
+    dispatch({
+      type: CartTypes.ADD,
+      itemId: item.itemId,
+    });
+
+  const decreaseFromCart = () => {
+    dispatch({
+      type: CartTypes.DECREASE,
+      itemId: item.itemId,
+    });
+  };
 
   return (
     <tr>
@@ -24,11 +31,14 @@ function CartRow({ cartItem, items, dispatch }) {
         ${((item.salePrice ?? item.price) * cartItem.quantity).toFixed(2)}
       </td>
       <td className="buttons">
+        <button type="button" onClick={addAnotherInCart}>
+          +
+        </button>
+        <button type="button" onClick={decreaseFromCart}>
+          - 
+        </button>
         <button type="button" onClick={removeItemFromCart}>
           X
-        </button>
-        <button type="button" onClick={addAnotherInCart}>
-            +
         </button>
       </td>
     </tr>
