@@ -75,7 +75,7 @@ const Cart = ({ cart, items, dispatch }) => {
     const newName = event.target.value;
     nameHandler(event);
     axios
-      .get(`http://localhost:3030/api/employees/isEmployeeOfTheMonth?name=${newName}`)
+      .get(`http://localhost:3030/api/employees/isEmployeeOfTheMonth?name=${newName}`) // TODO: mover URL para variável de ambiente
       .then((response) => {
         setIsEmployeeOfTheMonth(response?.data?.isEmployeeOfTheMonth);
       })
