@@ -14,16 +14,38 @@ import Cart from "./components/cart/Cart";
 
 
 function App() {
+  
+  const storageKey = 'cart';
+
+  // Estados para armazenar os itens e o carrinho
   const [items, setItems] = useState([]);
 
-  const [cart, dispatch] = useReducer(cartReducer, initialCartState);
-
+  const [cart, dispatch] = useReducer(cartReducer, initialCartState, (initialState) => {
+      try {
+        const storedCart = JSON.parse(localStorage.getItem(storageKey));
+        return storedCart || initialState;
+      } catch (error) {
+        console.log('Error parsing cart', error);
+        return initialState;
+      }
+    },
+  );
+  
+  // UseEffect para buscar os itens da API ao carregar o componente
   useEffect(() => {
     axios
       .get(`${import.meta.env.VITE_API_URL}/items`)
       .then((result) => setItems(result.data))
       .catch(console.error);
   }, []);
+
+  // UseEffect para salvar o estado do carrinho no localStorage sempre que ele mudar
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(cart));
+  }, [cart]);
+
+  
+
 
   return (
     <>

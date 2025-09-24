@@ -3,19 +3,36 @@ import PropTypes from "prop-types";
 import React, { useState } from "react";
 import ItemType from "../../types/ItemType";
 import CartRow from "../cartRow/CartRow";
+import axios from "axios";
 
 const Cart = ({ cart, items, dispatch }) => {
-  const subTotal = cart.reduce((acc, item) => {
+  // Estados para armazenar os dados do formulário
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [cep, setCEP] = useState("");
+  const [couponCode, setCouponCode] = useState(""); // TODO: implementar funcionalidade de cupom  de desconto
+  const [isEmployeeOfTheMonth, setIsEmployeeOfTheMonth] = useState(false);
+
+
+  // Validação do formulário
+  const isFormValid = cep.length === 8 && name.trim();
+
+  // Calculos de valor total, subtotal e taxa
+  const taxPercentage = parseInt(cep.substring(0, 1) || "0", 10) + 1;
+  const taxRate = taxPercentage / 100;
+  const subTotal = isEmployeeOfTheMonth ? 0 : cart.reduce((acc, item) => {
     const detailItem = items.find((i) => i.itemId === item.itemId);
     const itemPrice = detailItem.salePrice ?? detailItem.price;
     return item.quantity * itemPrice + acc;
   }, 0);
+  const tax = couponCode ? 0 : subTotal * taxRate;
+  const total = subTotal + tax; 
 
-  // função de formatação
+  // Função de formatação
   const formatPhoneNumber = (value) => {
     if (!value) return "";
 
-    const digits = value.replace(/\D/g, "").slice(0,11);
+    const digits = value.replace(/\D/g, "").slice(0, 11);
 
     const ddd = digits.slice(0, 2);
     const part1 =
@@ -36,6 +53,8 @@ const Cart = ({ cart, items, dispatch }) => {
     }
   };
 
+
+  // Função de submissão do formulário
   const submitOrder = (event) => {
     event.preventDefault();
     console.log("name: ", name);
@@ -43,25 +62,25 @@ const Cart = ({ cart, items, dispatch }) => {
     console.log("cep: ", cep);
   };
 
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [cep, setCEP] = useState("");
-
+  // Funções de handlers
   const nameHandler = (event) => setName(event.target.value);
   const phoneHandler = (event) => {
     const formatted = formatPhoneNumber(event.target.value);
     setPhone(formatted);
   };
-
   const cepHandler = (event) => setCEP(event.target.value);
+  const couponCodeHandler = (event) => setCouponCode(event.target.value);
 
-  const taxPercentage = parseInt(cep.substring(0, 1) || "0", 10) + 1;
-  const taxRate = taxPercentage / 100;
-  const tax = subTotal * taxRate;
-
-  const total = subTotal + tax;
-
-  const isFormValid = cep.length === 8 && name.trim();
+  const onChangeName = (event) => {
+    const newName = event.target.value;
+    nameHandler(event);
+    axios
+      .get(`http://localhost:3030/api/employees/isEmployeeOfTheMonth?name=${newName}`)
+      .then((response) => {
+        setIsEmployeeOfTheMonth(response?.data?.isEmployeeOfTheMonth);
+      })
+      .catch(console.error);
+  };
 
   return (
     <div className="cart-component">
@@ -106,7 +125,7 @@ const Cart = ({ cart, items, dispatch }) => {
                 id="name"
                 type="text"
                 value={name}
-                onChange={nameHandler}
+                onChange={onChangeName}
                 required
               />
             </label>
@@ -131,7 +150,18 @@ const Cart = ({ cart, items, dispatch }) => {
                 required
               />
             </label>
-            <button type="submit" disabled={!isFormValid}>Order Now</button>
+            <label htmlFor="couponCode">
+              Coupon Code (not working yet)
+              <input
+                type="text"
+                id="coupon"
+                onChange={couponCodeHandler}
+                value={couponCode}
+              />
+            </label>
+            <button type="submit" disabled={!isFormValid}>
+              Order Now
+            </button>
           </form>
         </>
       )}

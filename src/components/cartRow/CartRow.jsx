@@ -1,8 +1,12 @@
 import PropTypes from "prop-types";
 import ItemType from "../../types/ItemType";
 import { CartTypes } from "../../reducers/cartReducer";
+import { useState } from "react";
 
 function CartRow({ cartItem, items, dispatch }) {
+  
+  const [selectedQuantity, setSelectedQuantity] = useState(cartItem.quantity);
+  
   const item = items.find((i) => i.itemId === cartItem.itemId);
   const removeItemFromCart = () =>
     dispatch({
@@ -23,6 +27,16 @@ function CartRow({ cartItem, items, dispatch }) {
     });
   };
 
+  const selectQuantity = (event) => {
+    const quantity = Number(event.target.value);
+    dispatch({
+      type: CartTypes.SELECT,
+      itemId: item.itemId,
+      quantity,
+    });
+    setSelectedQuantity(quantity);
+  };
+
   return (
     <tr>
       <td>{cartItem.quantity}</td>
@@ -40,6 +54,13 @@ function CartRow({ cartItem, items, dispatch }) {
         <button type="button" onClick={removeItemFromCart}>
           X
         </button>
+        <select value={selectedQuantity} onChange={selectQuantity}>
+          {Array.from({ length: 21 }, (_, i) => i).map((num) => (
+            <option key={num} value={num}>
+              {num}
+            </option>
+          ))}
+        </select>
       </td>
     </tr>
   );
