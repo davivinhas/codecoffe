@@ -11,6 +11,7 @@ import Details from "./components/details/Details";
 import NotFound from "./components/notFound/NotFound";
 import DetailItem from "./components/detailsItem/DetailItem";
 import Cart from "./components/cart/Cart";
+import routes from "./data/routes";
 
 
 function App() {
@@ -56,15 +57,15 @@ function App() {
           <div>Loading...</div>
         ) : (
           <Routes>
-            <Route path="/" element={<Home items={items} />} />
+            <Route path={routes.home} element={<Home items={items} />} />
 
             <Route path="*" element={<NotFound />}></Route>
 
-            <Route path="/cart" element={<Cart cart={cart} items={items} dispatch={dispatch}/>} />
+            <Route path={routes.cart} element={<Cart cart={cart} items={items} dispatch={dispatch}/>} />
 
-            <Route path="/details" element={<Details items={items} />}>
+            <Route path={routes.details} element={<Details items={items} />}>
               <Route
-                path=":id"
+                path={routes.detailsItem}
                 element={<DetailItem items={items} dispatch={dispatch} />}
               />
               <Route index element={<div>No item selected</div>} />
