@@ -4,15 +4,21 @@ import React, { useState } from "react";
 import ItemType from "../../types/ItemType";
 import CartRow from "../cartRow/CartRow";
 import axios from "axios";
+import Alert from "../alert/Alert";
 
 const Cart = ({ cart, items, dispatch }) => {
-  // Estados para armazenar os dados do formulário
+  // Estados para armazenar os dados
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [cep, setCEP] = useState("");
   const [couponCode, setCouponCode] = useState(""); // TODO: implementar funcionalidade de cupom  de desconto
   const [isEmployeeOfTheMonth, setIsEmployeeOfTheMonth] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
+  // Refs para debounce e input de cep
+  const debounceRef = React.useRef(null);
+  const cepRef = React.useRef(null);
 
   // Validação do formulário
   const isFormValid = cep.length === 8 && name.trim();
@@ -20,20 +26,24 @@ const Cart = ({ cart, items, dispatch }) => {
   // Calculos de valor total, subtotal e taxa
   const taxPercentage = parseInt(cep.substring(0, 1) || "0", 10) + 1;
   const taxRate = taxPercentage / 100;
-  const subTotal = isEmployeeOfTheMonth ? 0 : cart.reduce((acc, item) => {
-    const detailItem = items.find((i) => i.itemId === item.itemId);
-    const itemPrice = detailItem.salePrice ?? detailItem.price;
-    return item.quantity * itemPrice + acc;
-  }, 0);
+  const subTotal = isEmployeeOfTheMonth
+    ? 0
+    : cart.reduce((acc, item) => {
+        const detailItem = items.find((i) => i.itemId === item.itemId);
+        const itemPrice = detailItem.salePrice ?? detailItem.price;
+        return item.quantity * itemPrice + acc;
+      }, 0);
   const tax = couponCode ? 0 : subTotal * taxRate;
-  const total = subTotal + tax; 
+  const total = subTotal + tax;
 
   // Função de formatação
   const formatPhoneNumber = (value) => {
     if (!value) return "";
 
     const digits = value.replace(/\D/g, "").slice(0, 11);
-
+    if (digits.length === 11) {
+      cepRef.current?.focus();
+    }
     const ddd = digits.slice(0, 2);
     const part1 =
       digits.length > 2 ? digits.slice(2, digits.length > 10 ? 7 : 6) : "";
@@ -53,15 +63,6 @@ const Cart = ({ cart, items, dispatch }) => {
     }
   };
 
-
-  // Função de submissão do formulário
-  const submitOrder = (event) => {
-    event.preventDefault();
-    console.log("name: ", name);
-    console.log("phone: ", phone);
-    console.log("cep: ", cep);
-  };
-
   // Funções de handlers
   const nameHandler = (event) => setName(event.target.value);
   const phoneHandler = (event) => {
@@ -71,19 +72,64 @@ const Cart = ({ cart, items, dispatch }) => {
   const cepHandler = (event) => setCEP(event.target.value);
   const couponCodeHandler = (event) => setCouponCode(event.target.value);
 
+  // Função de submissão do pedido
+  const submitOrder = async (event) => {
+    try {
+      event.preventDefault();
+      setIsSubmitting(true);
+      const orderData = {
+        items: cart,
+        name,
+        phone,
+        cep,
+        isEmployeeOfTheMonth,
+      };
+
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(axios.post("http://localhost:3030/api/orders", orderData));
+        }, 2000);
+      });
+
+    } catch (error) {
+      console.error("Error submitting order", error);
+    } finally {
+      setShowSuccessAlert(true);
+      setIsSubmitting(false);
+      setName("");
+      setPhone("");
+      setCEP("");
+      setCouponCode("");
+      setIsEmployeeOfTheMonth(false);
+      dispatch({ type: "CLEAR" }); // Limpa o carrinho após o pedido ser enviado
+    }
+  };
+
+  // Função de debounce para verificar se o nome é funcionário do mês
   const onChangeName = (event) => {
     const newName = event.target.value;
     nameHandler(event);
-    axios
-      .get(`http://localhost:3030/api/employees/isEmployeeOfTheMonth?name=${newName}`) // TODO: mover URL para variável de ambiente
-      .then((response) => {
-        setIsEmployeeOfTheMonth(response?.data?.isEmployeeOfTheMonth);
-      })
-      .catch(console.error);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      const encodedName = encodeURIComponent(newName);
+      const url = `http://localhost:3030/api/employees/isEmployeeOfTheMonth?name=${encodedName}`;
+
+      axios
+        .get(url)
+        .then((response) => {
+          setIsEmployeeOfTheMonth(response?.data?.isEmployeeOfTheMonth);
+        })
+        .catch(console.error);
+    }, 300);
   };
 
   return (
     <div className="cart-component">
+      <Alert visible={showSuccessAlert}>
+        <div>Order placed successfully!</div>
+      </Alert>
       <h2>Your Cart</h2>
       {cart.length === 0 ? (
         <div>Your cart is empty</div>
@@ -148,6 +194,7 @@ const Cart = ({ cart, items, dispatch }) => {
                 value={cep}
                 onChange={cepHandler}
                 required
+                ref={cepRef}
               />
             </label>
             <label htmlFor="couponCode">
@@ -159,7 +206,7 @@ const Cart = ({ cart, items, dispatch }) => {
                 value={couponCode}
               />
             </label>
-            <button type="submit" disabled={!isFormValid}>
+            <button type="submit" disabled={!isFormValid || isSubmitting}>
               Order Now
             </button>
           </form>

@@ -33,7 +33,7 @@ export const cartReducer = (state, action) => {
         )
         .filter((item) => item.quantity > 0);
       }
-    case CartTypes.select:
+    case CartTypes.SELECT:
       if (findItem(state, action.itemId)) {
         return state
         .map((item) =>
@@ -44,7 +44,8 @@ export const cartReducer = (state, action) => {
         .filter((item) => item.quantity > 0);
       }
       return [...state, { itemId: action.itemId, quantity: action.quantity }];
-
+    case "CLEAR":
+      return [];
     default:
       throw new Error(`Invalid action type ${action.type}`);
   }
